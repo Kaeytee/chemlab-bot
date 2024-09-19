@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -8,14 +9,12 @@ load_dotenv()
 
 # Get the bot token from the environment variable
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-# Your bot token from the BotFather
-TOKEN = "***REMOVED***"
 
 # List of prefixes for carbon chain length (up to 1000 carbons)
 def generate_prefix(n):
@@ -74,7 +73,7 @@ def get_functional_group(structure):
         return {'grp': grp, 'carbon_count': carbon_count}
 
     # Hydrocarbons: alkanes, alkenes, alkynes
-    hydrocarbon_match = structure.upper().match(r'^C(\d*)H(\d+)$')
+    hydrocarbon_match = re.match(r'^C(\d*)H(\d+)$', structure.upper())
     if hydrocarbon_match:
         carbon_count = int(hydrocarbon_match.group(1) or '1')
         hydrogen_count = int(hydrocarbon_match.group(2))
@@ -89,46 +88,40 @@ def get_functional_group(structure):
     return {'grp': grp, 'carbon_count': carbon_count}
 
 # Start function for the bot
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(
+async def start(update: Update, context) -> None:
+    await update.message.reply_text(
         "Welcome to ChemLab Bot! Enter a molecular formula (e.g., C3H8) to get the IUPAC name."
     )
 
 # Function to handle the IUPAC name based on user input
-def handle_message(update: Update, context: CallbackContext) -> None:
+async def handle_message(update: Update, context) -> None:
     text = update.message.text
     try:
         iupac_name = name_compound(text.strip().upper())
-        update.message.reply_text(f"IUPAC Name: {iupac_name}")
+        await update.message.reply_text(f"IUPAC Name: {iupac_name}")
     except Exception as e:
-        update.message.reply_text(f"An error occurred: {str(e)}")
+        await update.message.reply_text(f"An error occurred: {str(e)}")
 
 # Error handling
-def error(update: Update, context: CallbackContext) -> None:
+async def error_handler(update: Update, context) -> None:
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 def main() -> None:
-    # Create the Updater and pass it your bot's token.
-    updater = Updater(TOKEN, use_context=True)
-
-    # Get the dispatcher to register handlers
-    dispatcher = updater.dispatcher
+    # Create the Application
+    application = Application.builder().token(TOKEN).build()
 
     # Register start command
-    dispatcher.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
 
     # Register message handler for IUPAC name generation
-    dispatcher.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Log all errors
-    dispatcher.add_error_handler(error)
+    application.add_error_handler(error_handler)
 
     # Start the Bot
-    updater.start_polling()
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT, SIGTERM or SIGABRT
-    updater.idle()
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
