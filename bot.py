@@ -88,37 +88,28 @@ def get_functional_group(structure):
 
     return {'grp': grp, 'carbon_count': carbon_count}
 
-# Function to display the main menu
-async def show_menu(update: Update, context) -> None:
+# Start function for the bot
+async def start(update: Update, context) -> None:
+    """Send a welcome message with main menu and available links as buttons."""
     keyboard = [
         [InlineKeyboardButton("💬 WhatsApp Us", url="https://wa.me/233534544454")],
         [InlineKeyboardButton("📧 Email Us", url="mailto:info@chemlab.com")],
         [InlineKeyboardButton("📍 Find Us on Map", url="https://maps.app.goo.gl/vjXPCjceysvijGyT7")],
-        [InlineKeyboardButton("🔗 Visit Website", url='https://t.me/iv?url=https://chemistry-app-six.vercel.app')]
+        [InlineKeyboardButton("🔗 Visit Website", url='https://chemistry-app-six.vercel.app')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        "🔍 Main Menu:\n\nChoose from the options below:", 
+        "👋 Welcome to ChemLab Bot!\n\n⚗️ Enter a molecular formula (e.g., C3H8) to get the IUPAC name.\n\n"
+        "Here are some useful links for you:",
         reply_markup=reply_markup
     )
-
-# Start function for the bot
-async def start(update: Update, context) -> None:
-    """Send a welcome message with main menu and available commands."""
-    await update.message.reply_text(
-        "👋 Welcome to ChemLab Bot!\n\n⚗️ Enter a molecular formula (e.g., C3H8) to get the IUPAC name.\n\nYou can use the following commands:\n"
-        "/menu - Access the main menu\n"
-        "/help - List of commands"
-    )
-    await show_menu(update, context)
 
 # Help command to list available commands
 async def help_command(update: Update, context) -> None:
     await update.message.reply_text(
         "🛠 Available commands:\n"
-        "/start - Start the bot\n"
-        "/menu - Access the main menu\n"
+        "/start - Start the bot and access the links\n"
         "/help - List of available commands\n"
         "\nEnter a molecular formula to get the IUPAC name."
     )
@@ -151,9 +142,6 @@ def main() -> None:
 
     # Register help command
     application.add_handler(CommandHandler("help", help_command))
-
-    # Register /menu command to access main menu anytime
-    application.add_handler(CommandHandler("menu", show_menu))
 
     # Register message handler for IUPAC name generation
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
