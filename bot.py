@@ -1,7 +1,13 @@
-import logging
+import os
+from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the bot token from the environment variable
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
