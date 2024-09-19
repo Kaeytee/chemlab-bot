@@ -1,6 +1,11 @@
 # Ignore environment variable files
 .env
 
+# Ignore AWS configurations
+.aws/
+# Ignore AWS credentials
+.aws/
+
 # Ignore virtual environment directories
 venv/
 env/
@@ -16,6 +21,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 nohup.out
+
 # Ignore log files
 *.log
 *.log.*
