@@ -12,7 +12,7 @@ This Telegram bot converts molecular formulas to their corresponding IUPAC (Inte
 
 ## How to Use
 
-1. Start a chat with the bot on Telegram: [@MolecularFormulaBot](https://t.me/MolecularFormulaBot)
+1. Start a chat with the bot on Telegram: [@ChemLab_Bot](https://t.me/Chemlabb_bot)
 2. Send a molecular formula (e.g., "C3H8", "H2O", "C6H12O6")
 3. The bot will reply with the IUPAC name of the compound
 
@@ -98,12 +98,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you have any questions or suggestions, please feel free to reach out:
 
-- **WhatsApp**: [+1234567890](https://wa.me//+233534544454)
-- **Email**: (mailto:austinbediako4@gmail.com)
+- **WhatsApp**: [+233534544454](https://wa.me//+233534544454)
+- **Email**: [@Austin](mailto:austinbediako4@gmail.com)
 - **Location**: [View on Google Maps]([https://www.google.com/maps?q=your+location](https://www.google.com/maps/d/viewer?mid=1lTnYKOYpRIhgnZGYozcfmoOh9tc&hl=en&ll=6.129593864887134%2C-0.20541400000001597&z=8))
 
 You can also open an issue in this repository for bug reports or feature requests.
 
 ---
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by [Austin Bediako]
