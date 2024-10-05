@@ -47,8 +47,8 @@ Follow these steps to set up and run the bot locally or on your own server.
 ### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/your-username/molecular-formula-bot.git
-cd molecular-formula-bot
+git clone git@github.com:Kaeytee/chemlab-bot.git
+cd chemlab-bot
 ```
 
 ### Step 2: Create a virtual environment

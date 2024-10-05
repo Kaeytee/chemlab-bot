@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 import logging
-
+from telegram.error import InvalidToken
 # Load environment variables from .env file
 load_dotenv()
 
@@ -17,15 +17,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Function to dynamically generate prefixes up to 1000 carbons
+# Function to generate the prefix based on the number of carbons
 def generate_prefix(n):
     base_prefixes = [
         "meth", "eth", "prop", "but", "pent", "hex", "hept", "oct", "non", "dec"
     ]
+    
     tens_prefixes = [
         "dec", "icos", "tricos", "tetracos", "pentacos", "hexacos", "heptacos", "octacos", "nonacos"
     ]
-
+    
     if n <= 10:
         return base_prefixes[n - 1]
     elif n < 100:
@@ -38,14 +39,80 @@ def generate_prefix(n):
         hundreds_prefix = base_prefixes[hundreds - 1] + "cent"
         return hundreds_prefix + (generate_prefix(remainder) if remainder > 0 else "")
 
+# Function to identify the functional group and carbon count from the molecular structure
+def get_functional_group(structure):
+    grp = "Unavailable"
+    carbon_count = 0
+    pos = ""
+    use_pos = False
+
+    # Special case for formic acid (HCOOH)
+    if structure in ["HCOOH", "HCO2H"]:
+        grp = "alkanoic acid"
+        carbon_count = 1  # Formic acid has only 1 carbon atom
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    # General hydrocarbon patterns: Alkanes, Alkenes, Alkynes
+    hydro_carbon_match = re.match(r'^C(\d*)H(\d+)$', structure)
+    if hydro_carbon_match:
+        carbon_count = int(hydro_carbon_match.group(1) or '1')
+        hydrogen_count = int(hydro_carbon_match.group(2))
+        if hydrogen_count == 2 * carbon_count + 2:
+            grp = "alkane"
+        elif hydrogen_count == 2 * carbon_count:
+            grp = "alkene"
+        elif hydrogen_count == 2 * carbon_count - 2:
+            grp = "alkyne"
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    # Alcohols (Alkanols): CnH2n+1OH
+    alkanol_match = re.match(r'^C(\d*)H(\d+)OH$', structure)
+    if alkanol_match:
+        carbon_count = int(alkanol_match.group(1) or '1')
+        grp = "alkanol"
+        if carbon_count > 2:
+            pos = "1"  # Primary alcohol (OH group on the first carbon)
+            use_pos = True
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    # Carboxylic Acids (Alkanoic Acids): CnH2n+1COOH or CnH2n+1CO2H
+    alkanoic_acid_match = re.match(r'^C(\d*)H(\d+)(COOH|CO2H)$', structure)
+    if alkanoic_acid_match:
+        carbon_count = int(alkanoic_acid_match.group(1) or '1') + 1  # Add 1 for the carboxyl group (COOH)
+        grp = "alkanoic acid"
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    # Esters (RCOOR): Alkanoic acids where the -OH group is replaced by -OR
+    ester_match = re.match(r'^C(\d*)H(\d+)(COOR|CO2R)$', structure)
+    if ester_match:
+        carbon_count = int(ester_match.group(1) or '1') + 1
+        grp = "ester"
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    # Aldehydes (RCHO): Alkanal group
+    aldehyde_match = re.match(r'^C(\d*)H(\d+)O$', structure)
+    if aldehyde_match:
+        carbon_count = int(aldehyde_match.group(1) or '1')
+        grp = "aldehyde"
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    # Ketones (RCOR): Alkanone group
+    ketone_match = re.match(r'^C(\d*)H(\d+)O$', structure)
+    if ketone_match:
+        carbon_count = int(ketone_match.group(1) or '1')
+        grp = "ketone"
+        return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
+    return {"grp": grp, "carbonCount": carbon_count, "usePos": use_pos, "pos": pos}
+
 # Function to generate IUPAC names based on molecular formula
 def name_compound(structure):
     compound_data = get_functional_group(structure)
 
-    if compound_data['carbon_count'] > 1000:
+    if compound_data['carbonCount'] > 1000:
         return "Structure too complex for current naming logic."
 
-    prefix = generate_prefix(compound_data['carbon_count'])
+    prefix = generate_prefix(compound_data['carbonCount'])
 
     if compound_data['grp'] == "alkane":
         name = prefix + "ane"
@@ -57,36 +124,19 @@ def name_compound(structure):
         name = prefix + "anol"
     elif compound_data['grp'] == "alkanoic acid":
         name = prefix + "anoic acid"
+    elif compound_data['grp'] == "ester":
+        name = prefix + "oate"
+    elif compound_data['grp'] == "aldehyde":
+        name = prefix + "al"
+    elif compound_data['grp'] == "ketone":
+        name = prefix + "one"
     else:
         return "Invalid structure"
 
+    if compound_data['usePos']:
+        name = compound_data['pos'] + "-" + name
+
     return name.capitalize()
-
-# Function to identify the functional group and carbon count
-def get_functional_group(structure):
-    grp = "Unavailable"
-    carbon_count = 0
-
-    # Special case for formic acid (HCOOH)
-    if structure == "HCOOH" or structure == "HCO2H":
-        grp = "alkanoic acid"
-        carbon_count = 1
-        return {'grp': grp, 'carbon_count': carbon_count}
-
-    # Hydrocarbons: alkanes, alkenes, alkynes
-    hydrocarbon_match = re.match(r'^C(\d*)H(\d+)$', structure.upper())
-    if hydrocarbon_match:
-        carbon_count = int(hydrocarbon_match.group(1) or '1')
-        hydrogen_count = int(hydrocarbon_match.group(2))
-
-        if hydrogen_count == 2 * carbon_count + 2:
-            grp = "alkane"
-        elif hydrogen_count == 2 * carbon_count:
-            grp = "alkene"
-        elif hydrogen_count == 2 * carbon_count - 2:
-            grp = "alkyne"
-
-    return {'grp': grp, 'carbon_count': carbon_count}
 
 # Start function for the bot
 async def start(update: Update, context) -> None:
