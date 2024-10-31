@@ -8,6 +8,8 @@
 
 # Ignore virtual environment directories
 venv/
+venv/*
+
 # Ignore everything in the env folder except config.py
 env/*
 !env/config.py
