@@ -8,7 +8,9 @@
 
 # Ignore virtual environment directories
 venv/
-env/
+# Ignore everything in the env folder except config.py
+env/*
+!env/config.py
 
 # Ignore Python cache files
 __pycache__/
@@ -33,3 +35,7 @@ nohup.out
 # Ignore IDE-specific files (e.g., for VSCode or PyCharm)
 .vscode/
 .idea/
+
+# Ignore everything in the templates folder except the html directory
+templates/*
+!templates/html/
