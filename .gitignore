@@ -41,3 +41,9 @@ nohup.out
 # Ignore everything in the templates folder except the html directory
 templates/*
 !templates/html/
+# Ignore virtual environment directories
+venv/
+venv/*
+
+# Ignore everything in the Templates folder
+Templates/
